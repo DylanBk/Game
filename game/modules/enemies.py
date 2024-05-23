@@ -1,27 +1,24 @@
 import random
-from .items import *
 from .health_bar import *
+from .items import *
 
-class Character ():
+class Enemy():
     def __init__(self,
                  name: str,
-                 health: int) -> None:
+                 health: int,
+                 damage_multiplier: float) -> None:
         self.name = name
         self.health = health
         self.health_max = health
-        self.health_bar = HealthBar(self, colour="green")
+        self.health_bar = HealthBar(self, colour="red")
+        self.damage_multiplier = damage_multiplier
         self.weapon = default_weapon
         self.shield = default_shield
         self.armour = default_armour
 
-    def equip(self, item) -> None:
-        if item in Weapon.all_weapons:
-            self.weapon = item
-        elif item in Shield.all_shields:
-            self.shield = Shield
-        elif item in Armour.all_armours:
-            self.armour = item
-        print(f"{self.name} equipped a(n) {item.name}")
+    def equip(self, weapon) -> None:
+        self.weapon = weapon
+        print(f"{self.name} equipped a {self.weapon.name}")
 
     def drop(self) -> None:
         print(f"{self.name} dropped a {self.weapon.name}")
@@ -39,7 +36,7 @@ class Character ():
             target.armour.durability = max(target.armour.durability, 0)
             damage = self.weapon.damage
         elif target.armour == default_armour and target.shield != default_shield: # no armour but shield
-            hit = random.randint(1, 2) # 1 == hit, 2 == shield blocked hit
+            hit = random.randint(1, 4) # 1 == hit, 2 == shield blocked hit
             if hit == 1:
                 target.health -= self.weapon.damage
                 target.health = max(target.health, 0)
@@ -47,7 +44,7 @@ class Character ():
             else:
                 damage = 0
         else:                                                                     # shield and armour
-            hit = random.randint(1, 2)
+            hit = random.randint(1, 4)
             if hit == 1:
                 target.health -= (self.weapon.damage * 0.75)
                 target.health = max(target.health, 0)
@@ -63,3 +60,40 @@ class Character ():
             print(f"{target.name} blocked {self.name}'s hit with their shield!")
         else:
             print(f"{self.name} dealt {damage} damage to {target.name} with {self.weapon.name}")
+
+class EasyEnemy(Enemy):
+    def __init__(self,
+                 name: str,
+                 health: int,
+                 damage_multiplier: float) -> None:
+        super().__init__(name, health, damage_multiplier)
+        self.health_bar = HealthBar(self, colour="red")
+        self.damage_multiplier = 1
+
+class MediumEnemy(Enemy):
+    def __init__(self,
+                 name: str,
+                 health: int,
+                 damage_multiplier: float) -> None:
+        super().__init__(name, health, damage_multiplier)
+        self.health_bar = HealthBar(self, colour="red")
+        self.damage_multiplier = 1.25
+
+class HardEnemy(Enemy):
+    def __init__(self,
+                 name: str,
+                 health: int,
+                 damage_multiplier: float) -> None:
+        super().__init__(name, health, damage_multiplier)
+        self.health_bar = HealthBar(self, colour="red")
+        self.damage_multiplier = 1.5
+
+def spawn_enemy(name: str, difficulty: str, health: int, damage_multipler: float) -> Enemy:
+    enemy_difficulties: dict = {
+        "Easy": EasyEnemy,
+        "Medium": MediumEnemy,
+        "Hard": HardEnemy
+    }
+    enemy_type = enemy_difficulties.get(difficulty, EasyEnemy) # EasyEnemy is a fallback incase no difficulty
+
+    return enemy_type(name, health, damage_multipler)
