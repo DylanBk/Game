@@ -111,59 +111,65 @@ def spawn_loot(loot: int, loot_rarity: str):
     if loot_rarity == "random":
         loot_rarity = random.choice(list(loot_rarities.keys()))
 
-    match loot_rarity:
-        case "common":
-            for i in range(loot):
-                while True:
-                    loot_type = random.choice(list(common_loot.keys()))
+    while True:
+        match loot_rarity:
+            case "common":
+                for i in range(loot):
+                    while True:
+                        loot_type = random.choice(list(common_loot.keys()))
 
-                    match loot_type:
-                        case "common_weapons":
-                            loot_item = random.choice(common_weapons)
-                        case "common_shields":
-                            loot_item = random.choice(common_shields)
-                        case "common_armours":
-                            loot_item = random.choice(common_armours)
+                        match loot_type:
+                            case "common_weapons":
+                                loot_item = random.choice(common_weapons)
+                            case "common_shields":
+                                loot_item = random.choice(common_shields)
+                            case "common_armours":
+                                loot_item = random.choice(common_armours)
 
-                    if loot_item in loot_contents:
-                        continue
-                    else:
-                        loot_contents.append(loot_item)
-                        break
-        case "uncommon":
-            for i in range(loot):
-                while True:
-                    loot_type = random.choice(list(uncommon_loot.keys()))
-                    match loot_type:
-                        case "uncommon_weapons":
-                            loot_item = random.choice(uncommon_weapons)
-                        case "uncommon_shields":
-                            loot_item = random.choice(uncommon_shields)
-                        case "uncommon_armours":
-                            loot_item = random.choice(uncommon_armours)
+                        if loot_item in loot_contents:
+                            continue
+                        else:
+                            loot_contents.append(loot_item)
+                            break
+                break
+            case "uncommon":
+                for i in range(loot):
+                    while True:
+                        loot_type = random.choice(list(uncommon_loot.keys()))
+                        match loot_type:
+                            case "uncommon_weapons":
+                                loot_item = random.choice(uncommon_weapons)
+                            case "uncommon_shields":
+                                loot_item = random.choice(uncommon_shields)
+                            case "uncommon_armours":
+                                loot_item = random.choice(uncommon_armours)
 
-                    if loot_item in loot_contents:
-                        continue
-                    else:
-                        loot_contents.append(loot_item)
-                        break
-        case "rare":
-            for i in range(loot):
-                while True:
-                    loot_type = random.choice(list(rare_loot.keys()))
-                    match loot_type:
-                        case "rare_weapons":
-                            loot_item = random.choice(rare_weapons)
-                        case "rare_shields":
-                            loot_item = random.choice(rare_shields)
-                        case "rare_armours":
-                            loot_item = random.choice(rare_armours)
+                        if loot_item in loot_contents:
+                            continue
+                        else:
+                            loot_contents.append(loot_item)
+                            break
+                break
+            case "rare":
+                for i in range(loot):
+                    while True:
+                        loot_type = random.choice(list(rare_loot.keys()))
+                        match loot_type:
+                            case "rare_weapons":
+                                loot_item = random.choice(rare_weapons)
+                            case "rare_shields":
+                                loot_item = random.choice(rare_shields)
+                            case "rare_armours":
+                                loot_item = random.choice(rare_armours)
 
-                    if loot_item in loot_contents:
-                        continue
-                    else:
-                        loot_contents.append(loot_item)
-                        break
+                        if loot_item in loot_contents:
+                            continue
+                        else:
+                            loot_contents.append(loot_item)
+                            break
+                break
+            case "None":
+                continue
 
     return loot_contents
 

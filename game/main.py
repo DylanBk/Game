@@ -4,7 +4,7 @@ import os, time
 from modules import *
 
 # SAVE/LOAD GAME DATA
-def save_game_data(player: object, difficulty: str, level: str | int) -> None:
+def save_game_data(player: object, difficulty: str, level: str | int) -> pd.DataFrame:
     """
     ...Saves game data to a dictionary and then writes the dictionary into a new temporary DataFrame and then to the relevant CSV file.
 
@@ -24,6 +24,7 @@ def save_game_data(player: object, difficulty: str, level: str | int) -> None:
     weapon_serialised = pickle.dumps(player.weapon).hex()
     shield_serialised = pickle.dumps(player.shield).hex()
     armour_serialised = pickle.dumps(player.armour).hex()
+    potion_serialised = pickle.dumps(player.potion).hex()
 
     player_info: dict = {
         "player": player_serialised,
@@ -33,7 +34,8 @@ def save_game_data(player: object, difficulty: str, level: str | int) -> None:
         "character_health": player.health,
         "weapon": weapon_serialised,
         "shield": shield_serialised,
-        "armour": armour_serialised
+        "armour": armour_serialised,
+        "potion": potion_serialised
         }
 
     df = pd.DataFrame([player_info])
@@ -53,6 +55,7 @@ def load_game_data(df: pd.DataFrame) -> dict:
     """
     if df.empty:
         print("Error: No Data Found")
+        input("Press [ENTER] to return to main menu")
         menu()
 
     player_serialised = df.player.values[0]
@@ -71,6 +74,10 @@ def load_game_data(df: pd.DataFrame) -> dict:
     armour_serialised = bytes.fromhex(armour_serialised)
     armour = pickle.loads(armour_serialised)
 
+    potion_serialised = df.potion.values[0]
+    potion_serialised = bytes.fromhex(potion_serialised)
+    potion = pickle.loads(potion_serialised)
+
     player_info: dict = {
         "player": player,
         "difficulty": df.difficulty.values[0],
@@ -79,7 +86,8 @@ def load_game_data(df: pd.DataFrame) -> dict:
         "character_health": df.character_health.values[0],
         "weapon": weapon,
         "shield": shield,
-        "armour": armour
+        "armour": armour,
+        "potion": potion
     }
 
     return player_info
@@ -109,18 +117,18 @@ def campaign(df: pd.DataFrame) -> None: # load levels, location, etc
         case "Hard":
             damage_multiplier = 1.5
 
+    enemies_temp: list = []
     enemies: list = []
-    enemies2 = []
     i = 0
     for enemy in range(level.enemies):
         i += 1
         enemy = spawn_enemy(name=(f"enemy{i}"), difficulty=difficulty, health=100, damage_multipler=damage_multiplier)
+        enemies_temp.append(enemy)
         enemies.append(enemy)
-        enemies2.append(enemy)
 
     rooms: dict = {}
     for i in range(level.num_rooms):
-        room, entities, enemies, loot_contents = load_level_room(level=level, entities=entities, enemies=enemies, loot_contents=loot_contents)
+        room, entities, enemies_temp, loot_contents = load_level_room(level=level, entities=entities, enemies=enemies_temp, loot_contents=loot_contents)
         rooms[i] = room
     # print(room.is_entity, room.is_enemy, room.is_loot)
 
@@ -129,7 +137,7 @@ def campaign(df: pd.DataFrame) -> None: # load levels, location, etc
         if room.is_enemy:
             print(f"{player.name} stumbles upon a(n) {enemy.name} in this room.")
             while True:
-                choice = input("Choose an action:\n[1] Fight\n[2] Flee\n> ")
+                choice = input("Choose an action:\n[1] Fight\n[2] Drink a Potion\n[3] Flee\n> ")
                 if choice.isalnum():
                     if choice.isalpha():
                         print("\nInvalid input: Please choose a valid option.\n")
@@ -137,9 +145,11 @@ def campaign(df: pd.DataFrame) -> None: # load levels, location, etc
                     else:
                         match choice:
                             case "1":
-                                fight(player, enemies2)
-                                break
+                                enemy_state = fight(player, enemies)
+                                room.is_enemy = enemy_state
                             case "2":
+                                player.heal()
+                            case "3":
                                 current_room = flee(player, level, enemy, rooms, current_room)
                                 break
                 else:
@@ -173,36 +183,50 @@ def campaign(df: pd.DataFrame) -> None: # load levels, location, etc
 def exploring(): # exploring the world
     pass
 
-def fight(player: object, enemies2: list): # fight enemy
-    if len(enemies2) > 0:
-        for enemy in enemies2:
+def fight(player: object, enemies: list): # fight enemy
+    if len(enemies) > 0:
+        for enemy in enemies:
             while player.health > 0 and enemy.health > 0:
                 print()
                 player.health_bar.draw()
                 enemy.health_bar.draw()
                 print()
 
-                if player.health > 0:
-                    player.attack(enemy)
-
                 if enemy.health > 0:
-                    enemy.attack(player)
-
-                time.sleep(1)
-            if enemy.health < 0:
-                enemy.health_bar.draw()
-                print(f"{player.name} defeated {enemy.name} with {player.weapon.name}")
-                enemies2.remove(enemy)
-            else:
-                player.health_bar.draw()
-                print("YOU LOSE!")
-                print(f"{enemy.name} defeated {player.name} with {enemy.weapon.name}")
-                time.sleep(5)
-                menu()
-            break
+                    if player.health > 0:
+                        choice = input("Choose an Action:\n[1] Attack\n[2] Drink a Potion\n[3] Flee\n> ")
+                        if choice.isalnum():
+                            if choice.isalpha():
+                                pass
+                            else:
+                                match choice:
+                                    case "1":
+                                        player.attack(enemy)
+                                        enemy.attack(player)
+                                        continue
+                                    case "2":
+                                        player.health = player.heal() # testing !!!!!!!
+                                        enemy.attack(player)
+                                        continue
+                                    case "3":
+                                        continue # !!! sort it out !!!
+                                    case default:
+                                        print("\nInvalid input: Please choose a valid action.\n")
+                                        continue
+                        else:
+                            print("\nInvalid input: Please choose a valid action.\n")
+                            continue
+                    else:
+                        pass # player death subroutine
+                else:
+                    enemy_state = False
+                    print(f"{player.name} has defeated {enemy.name}!")
     else:
+        enemy_state = False
         print("This room is empty, you are safe from enemies for now. But there is also no loot.")
         input("Press [ENTER] to move on")
+
+    return enemy_state
 
 def flee(player:object, level: object, enemy: object, rooms: list, current_room: int) -> int: # run away
     """
@@ -345,6 +369,7 @@ def new_game(df: pd.DataFrame):
         return difficulty
 
     player = create_character()
+    player.potion = healing_potion_large
     difficulty = get_difficulty()
 
     df = save_game_data(player, difficulty, level="tutorial")

@@ -1,4 +1,4 @@
-import random
+import random, time
 from .items import *
 from .health_bar import *
 
@@ -8,11 +8,12 @@ class Character ():
                  health: int) -> None:
         self.name = name
         self.health = health
-        self.health_max = health
+        self.health_max = 100
         self.health_bar = HealthBar(self, colour="green")
         self.weapon = default_weapon
         self.shield = default_shield
         self.armour = default_armour
+        self.potion = default_potion
 
     def equip(self, item) -> None:
         """
@@ -87,3 +88,32 @@ class Character ():
             print(f"{target.name} blocked {self.name}'s hit with their shield!")
         else:
             print(f"{self.name} dealt {damage} damage to {target.name} with {self.weapon.name}")
+
+    def heal(self):
+        if self.potion == default_potion:
+            print(f"{self.name} searches their pockets for a healing potion but realises they've run out.")
+        elif self.potion.effect != "Healing":
+            print(f"{self.name} searches their pockets for a healing potion but realises they only have a {self.potion.name} potion.")
+        else:
+            print(f"{self.name} drinks a {self.potion.name}.")
+            heal_duration = self.potion.duration
+            for i in range(heal_duration):
+                if self.health < 100:
+                    self.health += 1
+                    self.health = min(self.health, 100)
+                    self.health_bar.draw()
+                    time.sleep(0.25)
+                else:
+                    break
+
+        return self.health
+
+    def strength(self) -> None:
+        if self.potion == default_potion:
+            print(f"{self.name} searches their pockets for a potion of strength but is unable to find one.")
+        elif self.potion.name != "Strength":
+            print(f"{self.name} searches their pockets for a potion of strength but realises they only have a {self.potion.name} potion.")
+        else:
+            strength_duration = self.potion.duration
+            for i in range(strength_duration):
+                self.weapon.damage *= 1.25
